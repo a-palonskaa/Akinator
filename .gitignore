@@ -1,0 +1,5 @@
+.vscode
+.DS_Store
+build
+logs/logger.txt
+logs/images/tree0.dot
