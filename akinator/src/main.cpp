@@ -23,23 +23,19 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    FILE* database_ostream = fopen("../new_database.txt", "w");
+    if (database_ostream == nullptr) {
+        LOG(ERROR, "Failed to open a dump file\n");
+        return EXIT_FAILURE;
+    }
+
     akinator_t akinator{};
     akinator.set_dump_ostream(ostream);
+    akinator.set_database_ostream(database_ostream);
 
     akinator.ctor(data_file);
 
-    data_t data1 = {"cat", strlen("cat")};
-    akinator.define_word(&data1, stdout);
-
-    data_t data2 = {"laptop", strlen("laptop")};
-    akinator.define_word(&data2, stdout);
-
-    akinator.find_difference(&data1, &data2, stdout);
-
-    akinator.play();
-    akinator.play();
-
-    akinator.dump();
+    akinator.play_akinator_game();
 
     akinator.dtor();
 
@@ -53,10 +49,15 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    if (fclose(database_ostream) == EOF) {
+        LOG(ERROR, "Failed to close a dump_file\n");
+        return EXIT_FAILURE;
+    }
+
     if (fclose(logger_file) == EOF) {
         fprintf(stderr, "Failed to close a logger_file\n");
         return EXIT_FAILURE;
     }
 }
 
-// TODO - menu, text-to-sound, save database, CHEСK, SDL(menu)
+// TODO - text-to-sound

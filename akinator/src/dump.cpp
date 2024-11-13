@@ -10,15 +10,22 @@ const size_t COMMAND_SIZE = 100;
 
 const char* FILENAME = "tree";
 
-static FILE** get_dump_ostream();
-
 static FILE** get_dump_ostream() {
+    static FILE* file = nullptr;
+    return &file;
+}
+
+static FILE** get_database_ostream() {
     static FILE* file = nullptr;
     return &file;
 }
 
 void akinator_t::set_dump_ostream(FILE* ostream) {
     *get_dump_ostream() = ostream;
+}
+
+void akinator_t::set_database_ostream(FILE* ostream) {
+    *get_database_ostream() = ostream;
 }
 
 //=========================================================================================
@@ -168,4 +175,48 @@ void akinator_t::print_links(FILE* tree_file, node_t* node) {
                            (size_t) node % 10000, (size_t) node->right % 10000);
         print_links(tree_file, node->right);
     }
+}
+
+//=========================================================================================
+
+void akinator_t::update_database() {
+    FILE* ostream = *get_database_ostream();
+    if (ostream == nullptr) {
+        LOG(WARNING, "Ostream for database was not set, print to stdoutn\n");
+        ostream = stdout;
+    }
+
+    print_node_r(ostream, root_, 0); //ХУЙНЯ - move pointer to the beginning of file meow
+}
+
+void akinator_t::print_node_r(FILE* ostream, node_t* node, size_t tab_cnt) {
+    if (node == nullptr) {
+        return;
+    }
+
+    for (size_t i = 0; i < tab_cnt; i++) {
+        fprintf(ostream, "\t");
+    }
+
+    fprintf(ostream, "{\n");
+
+    for (size_t i = 0; i < tab_cnt + 1; i++) {
+        fprintf(ostream, "\t");
+    }
+
+    fprintf(ostream,"\"%s\"\n", node->data.word);
+
+    if (node->left != nullptr) {
+        print_node_r(ostream, node->left, tab_cnt + 1);
+    }
+
+    if (node->right != nullptr) {
+        print_node_r(ostream, node->right, tab_cnt + 1);
+    }
+
+    for (size_t i = 0; i < tab_cnt; i++) {
+        fprintf(ostream, "\t");
+    }
+
+    fprintf(ostream, "}\n");
 }

@@ -33,10 +33,10 @@ void akinator_t::tree_init(text_t* text) {
             break;
         }
     }
-    root_ = new_initial_node(text, nullptr, &current_index);
+    root_ = new_initial_node_r(text, nullptr, &current_index);
 }
 
-node_t* akinator_t::new_initial_node(text_t* text, node_t* parent, size_t* index) {
+node_t* akinator_t::new_initial_node_r(text_t* text, node_t* parent, size_t* index) {
     node_t* current_node = (node_t*) calloc(sizeof(node_t), sizeof(char));
     if (current_node == nullptr) {
         LOG(ERROR, "Memory allocation error\n" STRERROR(errno));
@@ -44,7 +44,7 @@ node_t* akinator_t::new_initial_node(text_t* text, node_t* parent, size_t* index
     }
 
     unsigned char word[WORD_MAXLEN] = "";
-    int symbols_read = sscanf((char*) &text->symbols[*index], "%*[^\"]%*[\"]%99[^\"]", word); //ХУЙНЯ -  99
+    int symbols_read = sscanf((char*) &text->symbols[*index], "%*[^\"]%*[\"]%" STR_WORD_MAXLEN "[^\"]", word);
     if (symbols_read <= 0) {
         LOG(ERROR, "Reading error\n");
         return nullptr;
@@ -73,7 +73,7 @@ node_t* akinator_t::new_initial_node(text_t* text, node_t* parent, size_t* index
         }
         if (text->symbols[i] == '{') {
             *index = i++;
-            current_node->left = new_initial_node(text, current_node, index);
+            current_node->left = new_initial_node_r(text, current_node, index);
             break;
         }
     }
@@ -81,7 +81,7 @@ node_t* akinator_t::new_initial_node(text_t* text, node_t* parent, size_t* index
     for (i = *index; i < text->symbols_amount; i++) {
         if (text->symbols[i] == '{') {
             *index = i++;
-            current_node->right = new_initial_node(text, current_node, index);
+            current_node->right = new_initial_node_r(text, current_node, index);
             break;
         }
     }
@@ -108,19 +108,19 @@ node_t* akinator_t::new_node(char* string, size_t length, node_t* parent, node_t
 }
 
 void akinator_t::dtor() {
-    delete_node(root_);
+    delete_subtree_r(root_);
 }
-//FIXME - delete_subtree_r
-void akinator_t::delete_node(node_t* node) {
+
+void akinator_t::delete_subtree_r(node_t* node) {
     if (node == nullptr) {
         return;
     }
 
     if (node->left != nullptr) {
-        delete_node(node->left);
+        delete_subtree_r(node->left);
     }
     if (node->right != nullptr) {
-        delete_node(node->right);
+        delete_subtree_r(node->right);
     }
 
     free(node);

@@ -2,9 +2,12 @@
 #define AKINATOR_H
 
 #include "text_lib.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #define ANSWER_MAXLEN 5
 #define WORD_MAXLEN 100
+#define SPEAK_CMD_LEN 20
 
 #define STR_ANSWER_MAXLEN "4"
 #define STR_WORD_MAXLEN "99"
@@ -38,15 +41,59 @@ public:
     void play();
 
     void set_dump_ostream(FILE* ostream);
+    void set_database_ostream(FILE* ostream);
     void dump();
 
     void print_preorder_();
     void print_inorder_();
     void print_postorder_();
 
-    void define_word(data_t* data, FILE* ostream);
-    void find_difference(data_t* data1, data_t* data2, FILE* ostream);
+    void define_word();
+    void find_difference();
+
+    int play_akinator_game();
+    void update_database();
+
+    static void update_database_handler(akinator_t* obj) {
+        obj->update_database();
+    }
+
+    static void play_handler(akinator_t* obj) {
+        obj->play();
+    }
+
+    static void dump_handler(akinator_t* obj) {
+        obj->dump();
+    }
+
+    static void exit_game(akinator_t* obj) {
+        (void) obj;
+        obj->quit_game_ = true;
+    }
+
+    static void define_word_handler(akinator_t* obj) {
+        obj->define_word();
+    }
+
+    static void find_difference_handler(akinator_t* obj) {
+        obj->find_difference();
+    }
+
+    static void meow(akinator_t* obj) {
+        (void) obj;
+        printf("meow\n");
+        obj->speak("U pressed button meow");
+    }
+
+    typedef struct {
+        SDL_Rect rect;
+        const char* label;
+        void (*action)(akinator_t*);;
+    } button_t;
+
+    void speak(const char* text);
 private:
+    void print_node_r(FILE* ostream, node_t* node, size_t tab_cnt);
     node_t* find_word_node(node_t* node, data_t* data);
 
     void print_preorder(node_t* node);
@@ -59,13 +106,26 @@ private:
 
     void tree_init(text_t* text);
 
-    node_t* new_initial_node(text_t* text, node_t* parent, size_t* index);
+    node_t* new_initial_node_r(text_t* text, node_t* parent, size_t* index);
     node_t* new_node(char* string, size_t length, node_t* parent, node_t* right, node_t* left);
-    void delete_node(node_t* node);
+    void delete_subtree_r(node_t* node);
 
     void add_new_sign(node_t* node);
+    void render_footer(SDL_Renderer* renderer, TTF_Font* font);
+    void render_button(SDL_Renderer* renderer, const button_t* button, TTF_Font* font, SDL_Color color);
+
 private:
     node_t* root_{nullptr};
+
+    const button_t BUTTONS_[7]{{(SDL_Rect){100, 100, 120, 50}, "Play", play_handler},
+                            {(SDL_Rect){100, 180, 120, 50}, "Definition", define_word_handler},
+                            {(SDL_Rect){250, 100, 120, 50}, "Compare", find_difference_handler},
+                            {(SDL_Rect){250, 180, 200, 50}, "Update database", update_database_handler},
+                            {(SDL_Rect){100, 280, 120, 40}, "Dump", dump_handler},
+                            {(SDL_Rect){100, 380, 120, 40}, "Return", exit_game},
+                            {(SDL_Rect){250, 280, 120, 40}, "Meow", meow}};
+    const size_t buttons_amount{7};
+    bool quit_game_{false};
 };
 
 #endif /* AKINATOR_H */

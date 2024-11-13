@@ -4,46 +4,82 @@
 #include "stack.h"
 #include "my_stack.h"
 #include "pop_push.h"
+#include "utils.h"
+#include "logger.h"
 
 //===========================================================================================
-// NOTE: utils.cpp
+
 const size_t BASE_CAPACITY = 10;
 
-void print_addr(void* elm, FILE* ostream) {
-    assert(elm != nullptr);
-    assert(ostream != nullptr);
-
-    fprintf(ostream, "%p", *((char**)elm));
-}
-
 //===========================================================================================
 
-void akinator_t::find_difference(data_t* data1, data_t* data2, FILE* ostream) {
-    assert(data1 != nullptr);
-    assert(data2 != nullptr);
-    assert(ostream != nullptr);
+void akinator_t::find_difference() {
+    FILE* ostream = stdout;
 
-    node_t* word1_node = find_word_node(root_, data1); // FIXME - if not found
-    node_t* word2_node = find_word_node(root_, data2);
+    data_t data1 = {};
+    data_t data2 = {};
+
+    data1.word = (char*) calloc(WORD_MAXLEN, sizeof(char));
+    if (data1.word == nullptr) {
+        LOG(ERROR, "Failed to allocate memory for a word\n");
+        return;
+    }
+
+    data2.word = (char*) calloc(WORD_MAXLEN, sizeof(char));
+    if (data2.word == nullptr) {
+        LOG(ERROR, "Failed to allocate memory for a word\n");
+        return;
+    }
+
+    printf("Enter the first word, u wanna compare\n");
+    scanf("%" STR_WORD_MAXLEN "s", data1.word);
+    data1.length = strnlen(data1.word, WORD_MAXLEN);
+
+    printf("Enter the second word, u wanna compare\n");
+    scanf("%" STR_WORD_MAXLEN "s", data2.word);
+    data2.length = strnlen(data2.word, WORD_MAXLEN);
+
+    node_t* word1_node = find_word_node(root_, &data1);
+    if (word1_node == nullptr) {
+        fprintf(ostream, "Word %s has not been found\n", data1.word);
+        return;
+    }
+
+    node_t* word2_node = find_word_node(root_, &data2);
+    if (word2_node == nullptr) {
+        fprintf(ostream, "Word %s has not been found\n", data1.word);
+        return;
+    }
 
     my_stack_t* stk1 = NEW_STACK_(sizeof(void*), BASE_CAPACITY, print_addr);
+    if (stk1 == nullptr) {
+        LOG(ERROR, "Failed to create a stack\n");
+        return;
+    }
+
     my_stack_t* stk2 = NEW_STACK_(sizeof(void*), BASE_CAPACITY, print_addr);
+    if (stk2 == nullptr) {
+        LOG(ERROR, "Failed to create a stack\n");
+        return;
+    }
 
     stack_push(stk1, &word1_node);
     stack_push(stk2, &word2_node);
 
-    while (word1_node != root_) {
-        word1_node = word1_node->parent;
-        stack_push(stk1, &word1_node);
+    node_t* pushed_node = word1_node;
+    while (pushed_node != root_) {
+        pushed_node = pushed_node->parent;
+        stack_push(stk1, &pushed_node);
     }
 
-    while (word2_node != root_) {
-        word2_node = word2_node->parent;
-        stack_push(stk2, &word2_node);
+    pushed_node = word2_node;
+    while (pushed_node != root_) {
+        pushed_node = pushed_node->parent;
+        stack_push(stk2, &pushed_node);
     }
 
-    node_t* current_node1 = root_;
-    node_t* current_node2 = root_;
+    node_t* current_node1 = nullptr;
+    node_t* current_node2 = nullptr;
 
     stack_pop(stk1, &current_node1);
     stack_pop(stk2, &current_node2);
@@ -52,12 +88,16 @@ void akinator_t::find_difference(data_t* data1, data_t* data2, FILE* ostream) {
         stack_pop(stk1, &current_node1);
         stack_pop(stk2, &current_node2);
 
-        if ((current_node1->left == nullptr && current_node1->right == nullptr) ||
-            (current_node1->left == nullptr && current_node1->right == nullptr)) {
+        if (current_node1->parent == nullptr) {
             break;
         }
 
-        fprintf(ostream, "%s and %s are both ", data1->word, data2->word);
+        if ((current_node1->left == nullptr && current_node1->right == nullptr) ||
+            (current_node2->left == nullptr && current_node2->right == nullptr)) {
+            break;
+        }
+
+        fprintf(ostream, "%s and %s are both ", data1.word, data2.word);
 
         if (current_node1 == current_node1->parent->left) {
             fprintf(ostream, "not ");
@@ -66,25 +106,55 @@ void akinator_t::find_difference(data_t* data1, data_t* data2, FILE* ostream) {
         fprintf(ostream, "%s\n", current_node1->parent->data.word);
     }
 
-    if (current_node1->parent->right == current_node1) {
+    if (current_node1 == root_) {
+        stack_pop(stk1, &current_node1);
+        if (root_->right == current_node1) {
+            fprintf(ostream, "%s is %s, while %s is not %s\n",
+                              data1.word, root_->data.word,
+                              data2.word, root_->data.word);
+        }
+        else {
+             fprintf(ostream, "%s is not %s, while %s is %s\n",
+                               data1.word, root_->data.word,
+                               data2.word, root_->data.word);
+        }
+    }
+    else if (current_node1->parent->right == current_node1) {
         fprintf(ostream, "%s is %s, while %s is not %s\n",
-                data1->word, current_node1->parent->data.word,
-                data2->word, current_node1->parent->data.word);
+                          data1.word, current_node1->parent->data.word,
+                          data2.word, current_node1->parent->data.word);
     }
     else {
         fprintf(ostream, "%s is not %s, while %s is %s\n",
-                data1->word, current_node1->parent->data.word,
-                data2->word, current_node1->parent->data.word);
+                          data1.word, current_node1->parent->data.word,
+                          data2.word, current_node1->parent->data.word);
     }
 
     delete_stack(stk1);
     delete_stack(stk2);
 }
 
-void akinator_t::define_word(data_t* data, FILE* ostream) {
-    assert(ostream != nullptr);
+void akinator_t::define_word() {
+    FILE* ostream = stdout;
+    data_t data = {};
 
-    node_t* word_node = find_word_node(root_, data); //ХУЙНЯ - check for nullptr
+    data.word = (char*) calloc(WORD_MAXLEN, sizeof(char));
+    if (data.word == nullptr) {
+        LOG(ERROR, "Failed to allocate memory for a word\n");
+        return;
+    }
+
+    printf("Enter the word, u wanna define\n");
+    scanf("%" STR_WORD_MAXLEN "s", data.word);
+
+    data.length = strnlen(data.word, WORD_MAXLEN);
+    node_t* word_node = find_word_node(root_, &data);
+    if (word_node == nullptr) {
+        fprintf(ostream, "Word %s has not been found\n", data.word);
+        free(data.word);
+        return;
+    }
+
     fprintf(ostream, "DEFINTION: %s is ", word_node->data.word);
 
     bool first = true;
@@ -105,6 +175,9 @@ void akinator_t::define_word(data_t* data, FILE* ostream) {
     }
 
     fprintf(ostream, "\n\n");
+
+    free(data.word);
+    data.word = nullptr;
 }
 
 //===========================================================================================

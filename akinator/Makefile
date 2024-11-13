@@ -19,13 +19,14 @@ INCLUDES_COMMON = ../common/logger ../common/parse_arguments ../common/text ../t
 BUILD_DIR = ../build
 LIBS_DIR = ../build/libs
 
-SOURCES = main.cpp akinator.cpp game.cpp dump.cpp definition.cpp
+SOURCES = main.cpp akinator.cpp game.cpp dump.cpp definition.cpp utils.cpp menu.cpp
 OBJECTS = $(addprefix $(BUILD_DIR)/src/, $(SOURCES:%.cpp=%.o))
 DEPS = $(OBJECTS:%.o=%.d)
 
 EXECUTABLE = ../build/akinator
-CFLAGS += -I$(INCLUDE_DIR) $(addprefix -I, $(INCLUDES_COMMON))
+CFLAGS += -I$(INCLUDE_DIR) $(addprefix -I, $(INCLUDES_COMMON))  -I/opt/homebrew/include
 LDFLAGS = -L$(LIBS_DIR) -lcommon -ltree
+LDFLAGS += -L/opt/homebrew/lib -lSDL2 -lSDL2_ttf
 
 all: $(EXECUTABLE)
 
