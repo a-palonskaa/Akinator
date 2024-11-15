@@ -279,7 +279,7 @@ ptr_protect_t validate_ptr(const void* ptr) {
         writing_permission   = info.protection & VM_PROT_WRITE;
         execution_permission = info.protection & VM_PROT_EXECUTE;
     }
-// FIXME - create enum with 8 options, return info.protection, and then decode it
+
     if (reading_permission) {
         if (writing_permission) {
             if (execution_permission) {

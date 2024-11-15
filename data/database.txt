@@ -1,0 +1,15 @@
+{
+    "animal"
+    {
+        "food"
+        {
+            "laptop"
+        }
+        {
+            "coffee"
+        }
+    }
+    {
+        "cat"
+    }
+}

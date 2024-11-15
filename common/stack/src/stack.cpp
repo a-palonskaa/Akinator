@@ -36,7 +36,7 @@ error_t stack_ctor(my_stack_t* stk, size_t elm_size, size_t base_capacity, print
     }
     stk->elm_width = elm_size;
 
-    stk->poison_value = POISON_VALUE; // FIXME: remove field, extra memory
+    stk->poison_value = POISON_VALUE;
     char* buffer = (char*) calloc(stk->elm_width, sizeof(char));
     if (!buffer) {
         stk->error = MEMORY_ALLOCATION_ERROR;
