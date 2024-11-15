@@ -11,7 +11,7 @@ int main() {
     }
     LoggerSetFile(logger_file);
 
-    FILE* data_file = fopen("../data.txt", "r");
+    FILE* data_file = fopen("../data/database.txt", "r");
     if (data_file == nullptr) {
         LOG(ERROR, "Failed to open an input file\n");
         return EXIT_FAILURE;
@@ -23,7 +23,7 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    FILE* database_ostream = fopen("../new_database.txt", "w");
+    FILE* database_ostream = fopen("../logs/new_database.txt", "w");
     if (database_ostream == nullptr) {
         LOG(ERROR, "Failed to open a dump file\n");
         return EXIT_FAILURE;
@@ -60,4 +60,3 @@ int main() {
     }
 }
 
-// TODO - text-to-sound

@@ -1,15 +1,18 @@
 #ifndef AKINATOR_H
 #define AKINATOR_H
 
-#include "text_lib.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#define ANSWER_MAXLEN 5
+#include "text_lib.h"
+#include "stack.h"
+#include "my_stack.h"
+
+#define ANSWER_MAXLEN 10
 #define WORD_MAXLEN 100
 #define SPEAK_CMD_LEN 20
 
-#define STR_ANSWER_MAXLEN "4"
+#define STR_ANSWER_MAXLEN "9"
 #define STR_WORD_MAXLEN "99"
 
 typedef enum {
@@ -37,7 +40,7 @@ public:
     akinator_err_t ctor(FILE* data_file);
     void dtor();
 
-    void ask_question(node_t* node);
+    void ask_question(node_t* node, my_stack_t* stk);
     void play();
 
     void set_dump_ostream(FILE* ostream);
@@ -81,8 +84,13 @@ public:
 
     static void meow(akinator_t* obj) {
         (void) obj;
+
         printf("meow\n");
-        obj->speak("U pressed button meow");
+
+        const char* meow_sound_path = "../data/meow.wav";
+        char command[WORD_MAXLEN];
+        snprintf(command, sizeof(command), "afplay \"%s\"", meow_sound_path);
+        system(command);
     }
 
     typedef struct {
@@ -93,6 +101,7 @@ public:
 
     void speak(const char* text);
 private:
+    bool load_texture(SDL_Renderer* renderer, SDL_Texture** texture);
     void print_node_r(FILE* ostream, node_t* node, size_t tab_cnt);
     node_t* find_word_node(node_t* node, data_t* data);
 
@@ -117,15 +126,16 @@ private:
 private:
     node_t* root_{nullptr};
 
-    const button_t BUTTONS_[7]{{(SDL_Rect){100, 100, 120, 50}, "Play", play_handler},
-                            {(SDL_Rect){100, 180, 120, 50}, "Definition", define_word_handler},
-                            {(SDL_Rect){250, 100, 120, 50}, "Compare", find_difference_handler},
-                            {(SDL_Rect){250, 180, 200, 50}, "Update database", update_database_handler},
-                            {(SDL_Rect){100, 280, 120, 40}, "Dump", dump_handler},
-                            {(SDL_Rect){100, 380, 120, 40}, "Return", exit_game},
-                            {(SDL_Rect){250, 280, 120, 40}, "Meow", meow}};
-    const size_t buttons_amount{7};
+    const button_t BUTTONS_[7]{{(SDL_Rect){100, 100, 120, 50}, "Play",            play_handler},
+                               {(SDL_Rect){100, 180, 120, 50}, "Definition",      define_word_handler},
+                               {(SDL_Rect){250, 100, 120, 50}, "Compare",         find_difference_handler},
+                               {(SDL_Rect){250, 180, 200, 50}, "Update database", update_database_handler},
+                               {(SDL_Rect){100, 280, 120, 40}, "Dump",            dump_handler},
+                               {(SDL_Rect){100, 380, 120, 40}, "Return",          exit_game},
+                               {(SDL_Rect){250, 280, 120, 40}, "Meow",            meow}};
+    const size_t buttons_amount{sizeof(BUTTONS_) / sizeof(BUTTONS_[0])};
     bool quit_game_{false};
+    bool image_visible_{false};
 };
 
 #endif /* AKINATOR_H */

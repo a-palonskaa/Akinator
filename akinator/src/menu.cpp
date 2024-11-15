@@ -1,8 +1,34 @@
 #include <stdio.h>
+#include <SDL2/SDL_image.h>
 #include "logger.h"
 #include "akinator.h"
 
+const size_t MEOW_BUTTON = 6;
+
+bool akinator_t::load_texture(SDL_Renderer* renderer, SDL_Texture** texture) {
+    assert(renderer != nullptr);
+
+    SDL_Surface* surface = IMG_Load("../data/kitty.jpeg");
+    if (surface == nullptr) {
+        LOG(ERROR, "Unable to load image: ", IMG_GetError());
+        return false;
+    }
+
+    *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+
+    if (*texture == nullptr) {
+        LOG(ERROR, "Unable to create texture: ", SDL_GetError());
+        return false;
+    }
+    return true;
+}
+
 void akinator_t::render_button(SDL_Renderer* renderer, const button_t* button, TTF_Font* font, SDL_Color color) {
+    assert(renderer != nullptr);
+    assert(button != nullptr);
+    assert(font != nullptr);
+
     SDL_SetRenderDrawColor(renderer, 128, 0, 128, 255);
     SDL_RenderFillRect(renderer, &button->rect);
 
@@ -17,6 +43,9 @@ void akinator_t::render_button(SDL_Renderer* renderer, const button_t* button, T
 }
 
 void akinator_t::render_footer(SDL_Renderer* renderer, TTF_Font* font) {
+    assert(renderer != nullptr);
+    assert(font != nullptr);
+
     SDL_Surface* text_surface = TTF_RenderText_Solid(font, "Made by @aliffka", {0, 0, 0, 255});
     if (text_surface == nullptr) {
         printf("Error rendering text: %s\n", TTF_GetError());
@@ -76,11 +105,23 @@ int akinator_t::play_akinator_game() {
         return EXIT_FAILURE;
     }
 
+    if (IMG_Init(IMG_INIT_PNG) & (IMG_INIT_PNG == 0)) {
+        LOG(ERROR, "SDL_image could not initialize! SDL_image Error: ", IMG_GetError());
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
+
+    SDL_Texture* image_texture = nullptr;
+    load_texture(renderer, &image_texture);
+
     SDL_Color text_color = {255, 255, 255, 255};
 
     int quit = 0;
     SDL_Event e = {};
 
+    uint32_t start_time = 0;
     while (quit == false && quit_game_ == false) {
         SDL_SetRenderDrawColor(renderer, 0, 128, 128, 255);
         SDL_RenderClear(renderer);
@@ -90,6 +131,16 @@ int akinator_t::play_akinator_game() {
         }
 
         render_footer(renderer, footer_font);
+
+        if (image_visible_) {
+            SDL_Rect image_rect = {0, 0, 640, 440};
+            SDL_RenderCopy(renderer, image_texture, nullptr, &image_rect);
+
+
+            if (SDL_GetTicks() - start_time >= 3000) {
+                image_visible_ = false;
+            }
+        }
 
         SDL_RenderPresent(renderer);
 
@@ -106,6 +157,10 @@ int akinator_t::play_akinator_game() {
                     if (x >= BUTTONS_[i].rect.x && x <= BUTTONS_[i].rect.x + BUTTONS_[i].rect.w &&
                         y >= BUTTONS_[i].rect.y && y <= BUTTONS_[i].rect.y + BUTTONS_[i].rect.h) {
                         BUTTONS_[i].action(this);
+                        if (i == MEOW_BUTTON) {
+                            image_visible_ = true;
+                            start_time = SDL_GetTicks();
+                        }
                     }
                 }
             }

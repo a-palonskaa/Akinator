@@ -26,7 +26,7 @@ DEPS = $(OBJECTS:%.o=%.d)
 EXECUTABLE = ../build/akinator
 CFLAGS += -I$(INCLUDE_DIR) $(addprefix -I, $(INCLUDES_COMMON))  -I/opt/homebrew/include
 LDFLAGS = -L$(LIBS_DIR) -lcommon -ltree
-LDFLAGS += -L/opt/homebrew/lib -lSDL2 -lSDL2_ttf
+LDFLAGS += -L/opt/homebrew/lib -lSDL2 -lSDL2_ttf -lSDL2_image
 
 all: $(EXECUTABLE)
 
